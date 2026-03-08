@@ -115,7 +115,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center">
+    <div className="min-h-svh bg-background">
       <NewPlayerDialog
         open={open}
         onOpenChange={setOpen}
@@ -123,52 +123,70 @@ export default function Home() {
         setName={setName}
         onJoined={setPlayerData}
       />
-      <div className="flex flex-col gap-4">
-        {playerData ? <div>Player joined: {playerData.name}</div> : null}
 
-        {error ? (
-          <div className="text-sm text-destructive" role="alert">
-            {error}
+      <main className="mx-auto flex min-h-svh max-w-3xl flex-col gap-5 px-4 py-10">
+        <header className="mb-1 flex flex-col gap-1 text-xs text-muted-foreground">
+          <span>Real-time typing race</span>
+          {playerData ? (
+            <span>
+              Playing as{" "}
+              <span className="font-medium text-foreground">
+                {playerData.name}
+              </span>
+            </span>
+          ) : (
+            <span>Pick a nickname to join the current round.</span>
+          )}
+          {error ? (
+            <span className="text-destructive" role="alert">
+              {error}
+            </span>
+          ) : null}
+        </header>
+
+        <section className="rounded-md border border-border/60 bg-card/20 p-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-base font-medium text-foreground">
+                {activeRound === undefined
+                  ? "Loading round..."
+                  : activeRound === null
+                    ? "Waiting for next round..."
+                    : activeRound.sentence}
+              </p>
+              <div className="rounded-sm bg-muted px-3 py-1 text-xs text-muted-foreground tabular-nums">
+                {formatTimeLeft(activeRound)}
+              </div>
+            </div>
+
+            <Input
+              type="text"
+              placeholder="Start typing here..."
+              value={typedText}
+              className="mt-2 h-11 rounded-sm text-base"
+              onChange={async (e) => {
+                const value = e.target.value
+                setTypedText(value)
+
+                if (!playerData || !activeRound) return
+
+                try {
+                  await updateProgress({
+                    playerId: playerData.id,
+                    roundId: activeRound._id,
+                    typedText: value,
+                  })
+                } catch (err) {
+                  console.error(err)
+                  setError("Failed to update progress. Please try again.")
+                }
+              }}
+            />
           </div>
-        ) : null}
-
-        <div className="text-sm text-muted-foreground">
-          {activeRound === undefined
-            ? "Loading round..."
-            : activeRound === null
-              ? "Waiting for next round..."
-              : activeRound.sentence}
-        </div>
-
-        <div className="text-sm text-muted-foreground tabular-nums">
-          {formatTimeLeft(activeRound)}
-        </div>
-
-        <Input
-          type="text"
-          placeholder="Wpisz tekst"
-          value={typedText}
-          onChange={async (e) => {
-            const value = e.target.value
-            setTypedText(value)
-
-            if (!playerData || !activeRound) return
-
-            try {
-              await updateProgress({
-                playerId: playerData.id,
-                roundId: activeRound._id,
-                typedText: value,
-              })
-            } catch (err) {
-              console.error(err)
-              setError("Failed to update progress. Please try again.")
-            }
-          }}
-        />
+        </section>
 
         <Leaderboard leaderboard={leaderboard} currentPlayer={playerData} />
-      </div>
+      </main>
     </div>
   )
 }

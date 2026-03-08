@@ -45,11 +45,13 @@ export function NewPlayerDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Wpisz nick</DialogTitle>
+          <DialogTitle className="text-base font-semibold tracking-tight">
+            Welcome, racer
+          </DialogTitle>
           <DialogDescription>
-            Podaj swój nick, żeby dołączyć do gry.
+            Choose a short nickname to join the current game.
           </DialogDescription>
         </DialogHeader>
 
@@ -82,19 +84,25 @@ export function NewPlayerDialog({
           }}
           className="flex flex-col gap-3"
         >
-          <Input
-            type="text"
-            placeholder="Nick"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              if (error) setError(null)
-            }}
-            className={cn(error && "border-destructive")}
-            autoFocus
-          />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit">Dołącz</Button>
+          <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="Your nickname"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (error) setError(null)
+              }}
+              className={cn(error && "border-destructive")}
+              autoFocus
+            />
+            {error ? (
+              <p className="text-xs text-destructive">{error}</p>
+            ) : null}
+          </div>
+          <Button type="submit" className="mt-1 w-full">
+            Join game
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

@@ -110,9 +110,16 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
     updateUrlParams({ pageSize: safe, page: 1 })
   }
 
+  const formatProgress = (text: string) => {
+    const maxChars = 30
+    if (!text) return "\u2014"
+    if (text.length <= maxChars) return text
+    return "\u2026" + text.slice(-maxChars)
+  }
+
   return (
-    <div className="mt-4 rounded-2xl border border-border bg-background/40 p-4">
-      <div className="mb-2 flex items-center justify-between gap-4">
+    <section className="mt-6 rounded-md border border-border/60 bg-background/10 p-3">
+      <div className="mb-1 flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium">Live leaderboard</h2>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Rows per page:</span>
@@ -128,25 +135,34 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs md:text-sm">
+      <div className="mt-1 overflow-x-auto">
+        <table
+          className="w-full table-fixed text-left text-xs md:text-sm"
+          style={{ minWidth: 320 }}
+        >
+          <colgroup>
+            <col style={{ width: "45%" }} />
+            <col style={{ width: "25%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "15%" }} />
+          </colgroup>
           <thead className="border-b border-border text-muted-foreground">
             <tr>
-              <th className="px-2 py-1 font-medium">Live progress</th>
+              <th className="px-2 py-2 font-medium">Live progress</th>
               <th
-                className="cursor-pointer px-2 py-1 font-medium select-none"
+                className="cursor-pointer px-2 py-2 font-medium select-none"
                 onClick={() => handleSort("name")}
               >
                 Player name
               </th>
               <th
-                className="cursor-pointer px-2 py-1 font-medium select-none"
+                className="cursor-pointer px-2 py-2 text-right font-medium select-none"
                 onClick={() => handleSort("wpm")}
               >
                 WPM
               </th>
               <th
-                className="cursor-pointer px-2 py-1 font-medium select-none"
+                className="cursor-pointer px-2 py-2 text-right font-medium select-none"
                 onClick={() => handleSort("accuracy")}
               >
                 Accuracy
@@ -158,7 +174,7 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-2 py-3 text-center text-xs text-muted-foreground"
+                  className="px-2 py-6 text-center text-xs text-muted-foreground"
                 >
                   No players yet. Start typing to join the leaderboard.
                 </td>
@@ -172,17 +188,19 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
                     key={`${entry.playerId}-${entry.updatedAt}`}
                     className={
                       "border-b border-border/60 last:border-0" +
-                      (isCurrentPlayer ? " bg-primary/5 font-medium" : "")
+                      (isCurrentPlayer ? " bg-primary/5" : "")
                     }
                   >
-                    <td className="max-w-[180px] truncate px-2 py-1">
-                      {entry.typedText || "\u2014"}
+                    <td className="overflow-hidden px-2 py-2 text-xs whitespace-nowrap md:text-sm">
+                      {formatProgress(entry.typedText)}
                     </td>
-                    <td className="px-2 py-1">{entry.playerName}</td>
-                    <td className="px-2 py-1 tabular-nums">
+                    <td className="px-2 py-2 whitespace-nowrap">
+                      {entry.playerName}
+                    </td>
+                    <td className="px-2 py-2 text-right tabular-nums">
                       {entry.wpm.toFixed(1)}
                     </td>
-                    <td className="px-2 py-1 tabular-nums">
+                    <td className="px-2 py-2 text-right tabular-nums">
                       {(entry.accuracy * 100).toFixed(0)}%
                     </td>
                   </tr>
@@ -200,7 +218,7 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-md border border-input bg-background px-2 py-1 disabled:opacity-50"
+            className="rounded-md border border-input bg-background px-2 py-1 text-xs disabled:opacity-50"
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
           >
@@ -208,7 +226,7 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
           </button>
           <button
             type="button"
-            className="rounded-md border border-input bg-background px-2 py-1 disabled:opacity-50"
+            className="rounded-md border border-input bg-background px-2 py-1 text-xs disabled:opacity-50"
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
           >
@@ -216,7 +234,6 @@ export function Leaderboard({ leaderboard, currentPlayer }: LeaderboardProps) {
           </button>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
-
