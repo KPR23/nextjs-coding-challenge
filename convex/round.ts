@@ -1,6 +1,11 @@
 import { mutation, query } from "./_generated/server"
 import { v } from "convex/values"
 import sentences from "../src/lib/sentences.json"
+import {
+  computeAccuracy,
+  computeCorrectChars,
+  computeWpm,
+} from "../src/lib/metrics"
 
 export const joinGame = mutation({
   args: { name: v.string() },
@@ -164,6 +169,14 @@ export const updateProgress = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now()
+    const round = await ctx.db.get(args.roundId)
+    if (!round) throw new Error("Round not found")
+
+    const correctChars = computeCorrectChars(args.typedText, round.sentence)
+    const accuracy = computeAccuracy(correctChars, round.sentence.length)
+    const elapsedMs = now - round.startsAt
+    const wpm = computeWpm(correctChars, elapsedMs)
+
     const entry = await ctx.db
       .query("entries")
       .withIndex("by_round_and_player", (q) =>
@@ -176,11 +189,11 @@ export const updateProgress = mutation({
         roundId: args.roundId,
         playerId: args.playerId,
         typedText: args.typedText,
-        correctChars: 0,
+        correctChars,
         typedChars: args.typedText.length,
         finishedAt: undefined,
-        wpm: 0,
-        accuracy: 0,
+        wpm,
+        accuracy,
         createdAt: now,
         updatedAt: now,
       })
@@ -191,6 +204,9 @@ export const updateProgress = mutation({
     await ctx.db.patch(entry._id, {
       typedText: args.typedText,
       typedChars: args.typedText.length,
+      correctChars,
+      accuracy,
+      wpm,
       updatedAt: now,
     })
 
