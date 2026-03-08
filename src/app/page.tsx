@@ -91,6 +91,9 @@ export default function Home() {
     const remaining = timeLeft(activeRound)
     if (remaining > 0) return
 
+    // Round finished – clear local input immediately
+    setTypedText("")
+
     const rotateRound = async () => {
       try {
         const newRoundId = await ensureActiveRound()
@@ -98,7 +101,6 @@ export default function Home() {
           playerId: playerData.id,
           roundId: newRoundId,
         })
-        setTypedText("")
       } catch (err) {
         console.error(err)
         setError("Failed to start next round. Please try again.")
@@ -167,7 +169,58 @@ export default function Home() {
                   ? "Loading round..."
                   : activeRound === null
                     ? "Waiting for next round..."
-                    : activeRound.sentence}
+                    : null}
+                {activeRound && (
+                  <span className="inline-block font-mono">
+                    {(() => {
+                      const sentence = activeRound.sentence
+                      const typed = typedText
+
+                      if (!sentence) return null
+
+                      let correctPrefixLength = 0
+                      const maxPrefix = Math.min(typed.length, sentence.length)
+                      for (let i = 0; i < maxPrefix; i++) {
+                        if (typed[i] === sentence[i]) {
+                          correctPrefixLength++
+                        } else {
+                          break
+                        }
+                      }
+
+                      const incorrectUntil = Math.min(
+                        typed.length,
+                        sentence.length
+                      )
+                      const correctPart = sentence.slice(0, correctPrefixLength)
+                      const incorrectPart = sentence.slice(
+                        correctPrefixLength,
+                        incorrectUntil
+                      )
+                      const remainingPart = sentence.slice(incorrectUntil)
+
+                      return (
+                        <>
+                          {correctPart && (
+                            <span className="text-emerald-500">
+                              {correctPart}
+                            </span>
+                          )}
+                          {incorrectPart && (
+                            <span className="bg-destructive/15 text-destructive underline decoration-destructive">
+                              {incorrectPart}
+                            </span>
+                          )}
+                          {remainingPart && (
+                            <span className="text-muted-foreground">
+                              {remainingPart}
+                            </span>
+                          )}
+                        </>
+                      )
+                    })()}
+                  </span>
+                )}
               </p>
               <div className="rounded-sm bg-muted px-3 py-1 text-xs text-muted-foreground tabular-nums">
                 {formatTimeLeft(activeRound)}
