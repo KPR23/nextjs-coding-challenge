@@ -91,7 +91,6 @@ export default function Home() {
     const remaining = timeLeft(activeRound)
     if (remaining > 0) return
 
-    // Round finished – clear local input immediately
     setTypedText("")
 
     const rotateRound = async () => {
