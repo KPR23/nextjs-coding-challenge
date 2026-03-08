@@ -4,10 +4,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/src/components/ui/dialog"
-import { Input } from "./ui/input"
 import { Button } from "./ui/button"
+import { Input } from "./ui/input"
 
 export function NewPlayerDialog({
   open,
@@ -22,22 +21,16 @@ export function NewPlayerDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger>New player</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New player</DialogTitle>
+          <DialogTitle>Introduce yourself</DialogTitle>
           <DialogDescription>
-            Enter a name for the new player.
+            Enter a name for the new player to start typing.
           </DialogDescription>
         </DialogHeader>
-        <Input
-          type="text"
-          placeholder="Name"
-          value={player?.name ?? ""}
-          onChange={(e) => setPlayer({ name: e.target.value })}
-        />
-        <Button
-          onClick={() => {
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
             localStorage.setItem(
               "player",
               JSON.stringify({ name: player?.name })
@@ -45,9 +38,17 @@ export function NewPlayerDialog({
             setPlayer(null)
             onOpenChange(false)
           }}
+          className="flex flex-col gap-3"
         >
-          Save
-        </Button>
+          <Input
+            type="text"
+            placeholder="Name"
+            value={player?.name ?? ""}
+            onChange={(e) => setPlayer({ name: e.target.value })}
+            autoFocus
+          />
+          <Button type="submit">Save</Button>
+        </form>
       </DialogContent>
     </Dialog>
   )
