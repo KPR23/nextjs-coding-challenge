@@ -13,7 +13,6 @@ export default defineSchema({
 
   players: defineTable({
     name: v.string(),
-    lastSeenAt: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_name", ["name"]),

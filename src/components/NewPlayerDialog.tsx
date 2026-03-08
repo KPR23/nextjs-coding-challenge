@@ -1,3 +1,5 @@
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
 import {
   Dialog,
   DialogContent,
@@ -19,22 +21,24 @@ export function NewPlayerDialog({
   player: { name: string } | null
   setPlayer: (player: { name: string } | null) => void
 }) {
+  const joinGame = useMutation(api.round.joinGame)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Introduce yourself</DialogTitle>
+          <DialogTitle>Wpisz nick</DialogTitle>
           <DialogDescription>
-            Enter a name for the new player to start typing.
+            Podaj swój nick, żeby dołączyć do gry.
           </DialogDescription>
         </DialogHeader>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
-            localStorage.setItem(
-              "player",
-              JSON.stringify({ name: player?.name })
-            )
+            const name = (player?.name ?? "").trim()
+            if (!name) return
+            const playerId = await joinGame({ name })
+            localStorage.setItem("playerId", playerId)
             setPlayer(null)
             onOpenChange(false)
           }}
@@ -42,12 +46,12 @@ export function NewPlayerDialog({
         >
           <Input
             type="text"
-            placeholder="Name"
+            placeholder="Nick"
             value={player?.name ?? ""}
             onChange={(e) => setPlayer({ name: e.target.value })}
             autoFocus
           />
-          <Button type="submit">Save</Button>
+          <Button type="submit">Dołącz</Button>
         </form>
       </DialogContent>
     </Dialog>

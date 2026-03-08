@@ -9,17 +9,8 @@ export default function Page() {
   const [player, setPlayer] = useState<{ name: string } | null>(null)
 
   useEffect(() => {
-    const storedPlayer = localStorage.getItem("player")
-    if (!storedPlayer) {
-      setOpen(true)
-      return
-    }
-    try {
-      const { name } = JSON.parse(storedPlayer)
-      if (name == null || name === "") {
-        setOpen(true)
-      }
-    } catch {
+    const playerId = localStorage.getItem("playerId")
+    if (!playerId || playerId === "") {
       setOpen(true)
     }
   }, [])
