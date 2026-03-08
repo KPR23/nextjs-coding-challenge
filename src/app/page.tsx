@@ -10,7 +10,10 @@ import { Input } from "../components/ui/input"
 export default function Page() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
-  const [playerId, setPlayerId] = useState<Id<"players"> | null>(null)
+  const [playerData, setPlayerData] = useState<{
+    id: Id<"players">
+    name: string
+  } | null>(null)
   const [typedText, setTypedText] = useState("")
   const [now, setNow] = useState(() => Date.now())
 
@@ -20,11 +23,11 @@ export default function Page() {
   const activeRound = useQuery(api.round.getActiveRound)
 
   const handleUpdateProgress = async () => {
-    if (!playerId || !activeRound) {
+    if (!playerData || !activeRound) {
       return
     }
     await updateProgress({
-      playerId,
+      playerId: playerData.id,
       roundId: activeRound._id,
       typedText,
     })
@@ -32,19 +35,22 @@ export default function Page() {
 
   useEffect(() => {
     const init = async () => {
-      const storedPlayerId = localStorage.getItem("playerId")
+      const storedPlayerData = localStorage.getItem("playerData")
 
-      if (!storedPlayerId) {
+      if (!storedPlayerData) {
         setOpen(true)
         return
       }
 
-      const parsedPlayerId = storedPlayerId as Id<"players">
-      setPlayerId(parsedPlayerId)
+      const parsedPlayerData = JSON.parse(storedPlayerData) as {
+        id: Id<"players">
+        name: string
+      }
+      setPlayerData(parsedPlayerData)
 
       const roundId = await ensureActiveRound()
       await joinRound({
-        playerId: parsedPlayerId,
+        playerId: parsedPlayerData.id,
         roundId,
       })
     }
@@ -60,7 +66,7 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    if (!playerId || !activeRound) return
+    if (!playerData || !activeRound) return
 
     const remaining = timeLeft(activeRound)
     if (remaining > 0) return
@@ -68,14 +74,14 @@ export default function Page() {
     const rotateRound = async () => {
       const newRoundId = await ensureActiveRound()
       await joinRound({
-        playerId,
+        playerId: playerData.id,
         roundId: newRoundId,
       })
       setTypedText("")
     }
 
     void rotateRound()
-  }, [now, playerId, activeRound, ensureActiveRound, joinRound])
+  }, [now, playerData, activeRound, ensureActiveRound, joinRound])
 
   const timeLeft = (round: { endsAt: number } | null | undefined) => {
     if (!round) return 0
@@ -95,10 +101,10 @@ export default function Page() {
         onOpenChange={setOpen}
         name={name}
         setName={setName}
-        onJoined={setPlayerId}
+        onJoined={setPlayerData}
       />
       <div className="flex flex-col gap-4">
-        {playerId ? <div>Player joined: {playerId}</div> : null}
+        {playerData ? <div>Player joined: {playerData.name}</div> : null}
 
         <div className="text-sm text-muted-foreground">
           {activeRound?.sentence}
@@ -116,10 +122,10 @@ export default function Page() {
             const value = e.target.value
             setTypedText(value)
 
-            if (!playerId || !activeRound) return
+            if (!playerData || !activeRound) return
 
             await updateProgress({
-              playerId,
+              playerId: playerData.id,
               roundId: activeRound._id,
               typedText: value,
             })

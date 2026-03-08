@@ -22,7 +22,7 @@ export function NewPlayerDialog({
   onOpenChange: (open: boolean) => void
   name: string
   setName: (name: string) => void
-  onJoined: (playerId: Id<"players">) => void
+  onJoined: (playerData: { id: Id<"players">; name: string }) => void
 }) {
   const joinGame = useMutation(api.round.joinGame)
   const ensureActiveRound = useMutation(api.round.ensureActiveRound)
@@ -53,8 +53,11 @@ export function NewPlayerDialog({
               roundId,
             })
 
-            localStorage.setItem("playerId", String(playerId))
-            onJoined(playerId)
+            localStorage.setItem(
+              "playerData",
+              JSON.stringify({ id: playerId, name: trimmedName })
+            )
+            onJoined({ id: playerId, name: trimmedName })
             setName("")
             onOpenChange(false)
           }}
