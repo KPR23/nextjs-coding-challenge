@@ -110,7 +110,6 @@ export const ensureActiveRound = mutation({
 export const getActiveRound = query({
   args: {},
   handler: async (ctx) => {
-    const now = Date.now()
     const activeRound = await ctx.db
       .query("rounds")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -121,6 +120,39 @@ export const getActiveRound = query({
     }
 
     return activeRound
+  },
+})
+
+export const getRoundEntries = query({
+  args: {
+    roundId: v.id("rounds"),
+  },
+  handler: async (ctx, args) => {
+    const entries = await ctx.db
+      .query("entries")
+      .withIndex("by_round", (q) => q.eq("roundId", args.roundId))
+      .collect()
+
+    const results = []
+
+    for (const entry of entries) {
+      const player = await ctx.db.get(entry.playerId)
+      if (!player) continue
+
+      results.push({
+        playerId: entry.playerId,
+        playerName: player.name,
+        typedText: entry.typedText,
+        correctChars: entry.correctChars,
+        typedChars: entry.typedChars,
+        wpm: entry.wpm,
+        accuracy: entry.accuracy,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+      })
+    }
+
+    return results
   },
 })
 
