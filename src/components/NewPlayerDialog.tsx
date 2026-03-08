@@ -36,7 +36,7 @@ export function NewPlayerDialog({
     if (!nextOpen) {
       const trimmedName = (name ?? "").trim()
       if (!trimmedName) {
-        setError("Nick nie może być pusty")
+        setError("Nick cannot be empty")
         return
       }
     }
@@ -96,9 +96,7 @@ export function NewPlayerDialog({
               className={cn(error && "border-destructive")}
               autoFocus
             />
-            {error ? (
-              <p className="text-xs text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-xs text-destructive">{error}</p> : null}
           </div>
           <Button type="submit" className="mt-1 w-full">
             Join game
