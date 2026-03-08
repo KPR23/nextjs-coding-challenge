@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -10,6 +11,7 @@ import {
 } from "@/src/components/ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
+import { cn } from "../lib/utils"
 
 export function NewPlayerDialog({
   open,
@@ -24,12 +26,25 @@ export function NewPlayerDialog({
   setName: (name: string) => void
   onJoined: (playerData: { id: Id<"players">; name: string }) => void
 }) {
+  const [error, setError] = useState<string | null>(null)
+
   const joinGame = useMutation(api.round.joinGame)
   const ensureActiveRound = useMutation(api.round.ensureActiveRound)
   const joinRound = useMutation(api.round.joinRound)
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      const trimmedName = (name ?? "").trim()
+      if (!trimmedName) {
+        setError("Nick nie może być pusty")
+        return
+      }
+    }
+    onOpenChange(nextOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Wpisz nick</DialogTitle>
@@ -43,7 +58,12 @@ export function NewPlayerDialog({
             e.preventDefault()
 
             const trimmedName = (name ?? "").trim()
-            if (!trimmedName) return
+            if (!trimmedName) {
+              setError("Nick nie może być pusty")
+              return
+            }
+
+            setError(null)
 
             const playerId = await joinGame({ name: trimmedName })
             const roundId = await ensureActiveRound()
@@ -58,7 +78,6 @@ export function NewPlayerDialog({
               JSON.stringify({ id: playerId, name: trimmedName })
             )
             onJoined({ id: playerId, name: trimmedName })
-            setName("")
             onOpenChange(false)
           }}
           className="flex flex-col gap-3"
@@ -67,9 +86,14 @@ export function NewPlayerDialog({
             type="text"
             placeholder="Nick"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (error) setError(null)
+            }}
+            className={cn(error && "border-destructive")}
             autoFocus
           />
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button type="submit">Dołącz</Button>
         </form>
       </DialogContent>
