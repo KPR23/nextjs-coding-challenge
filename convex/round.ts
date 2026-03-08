@@ -128,6 +128,38 @@ export const getActiveRound = query({
   },
 })
 
+export const getPlayerStats = query({
+  args: { playerId: v.id("players") },
+  handler: async (ctx, args) => {
+    const entries = await ctx.db
+      .query("entries")
+      .withIndex("by_player", (q) => q.eq("playerId", args.playerId))
+      .collect()
+
+    if (entries.length === 0) return null
+
+    let bestWpm = 0
+    let sumWpm = 0
+    let sumAccuracy = 0
+    let lastPlayedAt = 0
+
+    for (const entry of entries) {
+      if (entry.wpm > bestWpm) bestWpm = entry.wpm
+      sumWpm += entry.wpm
+      sumAccuracy += entry.accuracy
+      if (entry.updatedAt > lastPlayedAt) lastPlayedAt = entry.updatedAt
+    }
+
+    return {
+      roundsPlayed: entries.length,
+      bestWpm,
+      avgWpm: sumWpm / entries.length,
+      avgAccuracy: sumAccuracy / entries.length,
+      lastPlayedAt,
+    }
+  },
+})
+
 export const getRoundEntries = query({
   args: {
     roundId: v.id("rounds"),
