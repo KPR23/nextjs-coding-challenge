@@ -1,18 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { Id } from "@/convex/_generated/dataModel"
 import { NewPlayerDialog } from "../components/NewPlayerDialog"
-import { Button } from "../components/ui/button"
 
 export default function Page() {
   const [open, setOpen] = useState(false)
   const [player, setPlayer] = useState<{ name: string } | null>(null)
+  const [playerId, setPlayerId] = useState<Id<"players"> | null>(null)
 
   useEffect(() => {
-    const playerId = localStorage.getItem("playerId")
-    if (!playerId || playerId === "") {
+    const storedPlayerId = localStorage.getItem("playerId")
+
+    if (!storedPlayerId) {
       setOpen(true)
+      return
     }
+
+    setPlayerId(storedPlayerId as Id<"players">)
   }, [])
 
   return (
@@ -22,7 +27,10 @@ export default function Page() {
         onOpenChange={setOpen}
         player={player}
         setPlayer={setPlayer}
+        onJoined={setPlayerId}
       />
+
+      {playerId ? <div>Player joined: {playerId}</div> : null}
     </div>
   )
 }

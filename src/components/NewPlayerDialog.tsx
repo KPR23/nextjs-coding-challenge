@@ -1,5 +1,6 @@
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 import {
   Dialog,
   DialogContent,
@@ -15,13 +16,17 @@ export function NewPlayerDialog({
   onOpenChange,
   player,
   setPlayer,
+  onJoined,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   player: { name: string } | null
   setPlayer: (player: { name: string } | null) => void
+  onJoined: (playerId: Id<"players">) => void
 }) {
   const joinGame = useMutation(api.round.joinGame)
+  const ensureActiveRound = useMutation(api.round.ensureActiveRound)
+  const joinRound = useMutation(api.round.joinRound)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,13 +37,24 @@ export function NewPlayerDialog({
             Podaj swój nick, żeby dołączyć do gry.
           </DialogDescription>
         </DialogHeader>
+
         <form
           onSubmit={async (e) => {
             e.preventDefault()
+
             const name = (player?.name ?? "").trim()
             if (!name) return
+
             const playerId = await joinGame({ name })
-            localStorage.setItem("playerId", playerId)
+            const roundId = await ensureActiveRound()
+
+            await joinRound({
+              playerId,
+              roundId,
+            })
+
+            localStorage.setItem("playerId", String(playerId))
+            onJoined(playerId)
             setPlayer(null)
             onOpenChange(false)
           }}
