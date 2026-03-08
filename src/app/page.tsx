@@ -26,6 +26,11 @@ export default function Home() {
       api.round.getRoundEntries,
       activeRound ? { roundId: activeRound._id } : "skip"
     ) ?? []
+  const playerStats =
+    useQuery(
+      api.round.getPlayerStats,
+      playerData ? { playerId: playerData.id } : "skip"
+    ) ?? null
 
   const handleUpdateProgress = async () => {
     if (!playerData || !activeRound) {
@@ -128,12 +133,22 @@ export default function Home() {
         <header className="mb-1 flex flex-col gap-1 text-xs text-muted-foreground">
           <span>Real-time typing race</span>
           {playerData ? (
-            <span>
-              Playing as{" "}
-              <span className="font-medium text-foreground">
-                {playerData.name}
+            <div className="flex flex-col gap-0.5">
+              <span>
+                Playing as{" "}
+                <span className="font-medium text-foreground">
+                  {playerData.name}
+                </span>
               </span>
-            </span>
+              {playerStats ? (
+                <span className="tabular-nums">
+                  Rounds: {playerStats.roundsPlayed} · Best WPM:{" "}
+                  {playerStats.bestWpm.toFixed(1)} · Avg WPM:{" "}
+                  {playerStats.avgWpm.toFixed(1)} · Avg acc:{" "}
+                  {(playerStats.avgAccuracy * 100).toFixed(0)}%
+                </span>
+              ) : null}
+            </div>
           ) : (
             <span>Pick a nickname to join the current round.</span>
           )}

@@ -5,6 +5,14 @@ export type PlayerData = {
   name: string
 }
 
+export type PlayerStats = {
+  roundsPlayed: number
+  bestWpm: number
+  avgWpm: number
+  avgAccuracy: number
+  lastPlayedAt: number
+}
+
 export type LeaderboardEntry = {
   playerId: Id<"players">
   playerName: string
