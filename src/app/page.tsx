@@ -3,7 +3,7 @@
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { useMutation, useQuery } from "convex/react"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Leaderboard } from "../components/Leaderboard"
 import { NewPlayerDialog } from "../components/NewPlayerDialog"
 import { Input } from "../components/ui/input"
@@ -252,7 +252,17 @@ export default function Home() {
           </div>
         </section>
 
-        <Leaderboard leaderboard={leaderboard} currentPlayer={playerData} />
+        <Suspense
+          fallback={
+            <section className="mt-6 rounded-md border border-border/60 bg-background/10 p-3">
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Loading leaderboard...
+              </div>
+            </section>
+          }
+        >
+          <Leaderboard leaderboard={leaderboard} currentPlayer={playerData} />
+        </Suspense>
       </main>
     </div>
   )
