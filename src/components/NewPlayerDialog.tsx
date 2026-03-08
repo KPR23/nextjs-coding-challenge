@@ -14,14 +14,14 @@ import { Input } from "./ui/input"
 export function NewPlayerDialog({
   open,
   onOpenChange,
-  player,
-  setPlayer,
+  name,
+  setName,
   onJoined,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  player: { name: string } | null
-  setPlayer: (player: { name: string } | null) => void
+  name: string
+  setName: (name: string) => void
   onJoined: (playerId: Id<"players">) => void
 }) {
   const joinGame = useMutation(api.round.joinGame)
@@ -42,10 +42,10 @@ export function NewPlayerDialog({
           onSubmit={async (e) => {
             e.preventDefault()
 
-            const name = (player?.name ?? "").trim()
-            if (!name) return
+            const trimmedName = (name ?? "").trim()
+            if (!trimmedName) return
 
-            const playerId = await joinGame({ name })
+            const playerId = await joinGame({ name: trimmedName })
             const roundId = await ensureActiveRound()
 
             await joinRound({
@@ -55,7 +55,7 @@ export function NewPlayerDialog({
 
             localStorage.setItem("playerId", String(playerId))
             onJoined(playerId)
-            setPlayer(null)
+            setName("")
             onOpenChange(false)
           }}
           className="flex flex-col gap-3"
@@ -63,8 +63,8 @@ export function NewPlayerDialog({
           <Input
             type="text"
             placeholder="Nick"
-            value={player?.name ?? ""}
-            onChange={(e) => setPlayer({ name: e.target.value })}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             autoFocus
           />
           <Button type="submit">Dołącz</Button>

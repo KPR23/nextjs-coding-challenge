@@ -1,5 +1,6 @@
-import { mutation } from "./_generated/server"
+import { mutation, query } from "./_generated/server"
 import { v } from "convex/values"
+import sentences from "../src/lib/sentences.json"
 
 export const joinGame = mutation({
   args: { name: v.string() },
@@ -90,16 +91,77 @@ export const ensureActiveRound = mutation({
         updatedAt: now,
       })
     }
-
-    const sentence = "The quick brown fox jumps over the lazy dog."
+    const getRandomSentence = (sentences: string[]): string => {
+      const randomIndex = Math.floor(Math.random() * sentences.length)
+      return sentences[randomIndex]
+    }
 
     return await ctx.db.insert("rounds", {
-      sentence,
+      sentence: getRandomSentence(sentences),
       startsAt: now,
       endsAt: now + 60_000,
       status: "active",
       createdAt: now,
       updatedAt: now,
     })
+  },
+})
+
+export const getActiveRound = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now()
+    const activeRound = await ctx.db
+      .query("rounds")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .first()
+
+    if (!activeRound) {
+      return null
+    }
+
+    return activeRound
+  },
+})
+
+export const updateProgress = mutation({
+  args: {
+    playerId: v.id("players"),
+    roundId: v.id("rounds"),
+    typedText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now()
+    const entry = await ctx.db
+      .query("entries")
+      .withIndex("by_round_and_player", (q) =>
+        q.eq("roundId", args.roundId).eq("playerId", args.playerId)
+      )
+      .first()
+
+    if (!entry) {
+      const newEntryId = await ctx.db.insert("entries", {
+        roundId: args.roundId,
+        playerId: args.playerId,
+        typedText: args.typedText,
+        correctChars: 0,
+        typedChars: args.typedText.length,
+        finishedAt: undefined,
+        wpm: 0,
+        accuracy: 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      return newEntryId
+    }
+
+    await ctx.db.patch(entry._id, {
+      typedText: args.typedText,
+      typedChars: args.typedText.length,
+      updatedAt: now,
+    })
+
+    return entry._id
   },
 })
