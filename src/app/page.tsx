@@ -1,36 +1,46 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Id } from "@/convex/_generated/dataModel"
-import { NewPlayerDialog } from "../components/NewPlayerDialog"
-import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
+import { useMutation, useQuery } from "convex/react"
+import { useEffect, useState } from "react"
+import { Leaderboard } from "../components/Leaderboard"
+import { NewPlayerDialog } from "../components/NewPlayerDialog"
 import { Input } from "../components/ui/input"
+import { PlayerData } from "../lib/types"
 
-export default function Page() {
+export default function Home() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
-  const [playerData, setPlayerData] = useState<{
-    id: Id<"players">
-    name: string
-  } | null>(null)
+  const [playerData, setPlayerData] = useState<PlayerData | null>(null)
   const [typedText, setTypedText] = useState("")
   const [now, setNow] = useState(() => Date.now())
+  const [error, setError] = useState<string | null>(null)
 
   const updateProgress = useMutation(api.round.updateProgress)
   const ensureActiveRound = useMutation(api.round.ensureActiveRound)
   const joinRound = useMutation(api.round.joinRound)
   const activeRound = useQuery(api.round.getActiveRound)
+  const leaderboard =
+    useQuery(
+      api.round.getRoundEntries,
+      activeRound ? { roundId: activeRound._id } : "skip"
+    ) ?? []
 
   const handleUpdateProgress = async () => {
     if (!playerData || !activeRound) {
       return
     }
-    await updateProgress({
-      playerId: playerData.id,
-      roundId: activeRound._id,
-      typedText,
-    })
+    try {
+      await updateProgress({
+        playerId: playerData.id,
+        roundId: activeRound._id,
+        typedText,
+      })
+    } catch (err) {
+      console.error(err)
+      setError("Failed to update progress. Please try again.")
+    }
   }
 
   useEffect(() => {
@@ -48,11 +58,16 @@ export default function Page() {
       }
       setPlayerData(parsedPlayerData)
 
-      const roundId = await ensureActiveRound()
-      await joinRound({
-        playerId: parsedPlayerData.id,
-        roundId,
-      })
+      try {
+        const roundId = await ensureActiveRound()
+        await joinRound({
+          playerId: parsedPlayerData.id,
+          roundId,
+        })
+      } catch (err) {
+        console.error(err)
+        setError("Failed to join round. Please refresh the page.")
+      }
     }
 
     void init()
@@ -72,12 +87,17 @@ export default function Page() {
     if (remaining > 0) return
 
     const rotateRound = async () => {
-      const newRoundId = await ensureActiveRound()
-      await joinRound({
-        playerId: playerData.id,
-        roundId: newRoundId,
-      })
-      setTypedText("")
+      try {
+        const newRoundId = await ensureActiveRound()
+        await joinRound({
+          playerId: playerData.id,
+          roundId: newRoundId,
+        })
+        setTypedText("")
+      } catch (err) {
+        console.error(err)
+        setError("Failed to start next round. Please try again.")
+      }
     }
 
     void rotateRound()
@@ -106,8 +126,18 @@ export default function Page() {
       <div className="flex flex-col gap-4">
         {playerData ? <div>Player joined: {playerData.name}</div> : null}
 
+        {error ? (
+          <div className="text-sm text-destructive" role="alert">
+            {error}
+          </div>
+        ) : null}
+
         <div className="text-sm text-muted-foreground">
-          {activeRound?.sentence}
+          {activeRound === undefined
+            ? "Loading round..."
+            : activeRound === null
+              ? "Waiting for next round..."
+              : activeRound.sentence}
         </div>
 
         <div className="text-sm text-muted-foreground tabular-nums">
@@ -124,13 +154,20 @@ export default function Page() {
 
             if (!playerData || !activeRound) return
 
-            await updateProgress({
-              playerId: playerData.id,
-              roundId: activeRound._id,
-              typedText: value,
-            })
+            try {
+              await updateProgress({
+                playerId: playerData.id,
+                roundId: activeRound._id,
+                typedText: value,
+              })
+            } catch (err) {
+              console.error(err)
+              setError("Failed to update progress. Please try again.")
+            }
           }}
         />
+
+        <Leaderboard leaderboard={leaderboard} currentPlayer={playerData} />
       </div>
     </div>
   )
